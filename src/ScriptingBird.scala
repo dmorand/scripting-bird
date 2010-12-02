@@ -1,26 +1,33 @@
-import org.apache.commons.httpclient._, auth._, methods._, params._
+import java.lang.Thread._
+
+import scala.collection.JavaConversions._
+import scala.tools.nsc._
 import scala.xml._
-import java.io._
-import java.nio._
+
+import twitter4j._
+import twitter4j.http._
 
 object ScriptingBird {
   def main(args: Array[String]): Unit = {
-    println("Password: ")
-    val password = new BufferedReader(new InputStreamReader(System.in)).readLine()
-    println(new ScriptingBird(password).getMentions)
-  }
-}
+    val config = XML.loadFile(args(0));
+    val accessToken = config \ "accessToken" text
+    val accessTokenSecret = config \ "accessTokenSecret" text
+    val consumerKey = config \ "consumerKey" text
+    val consumerSecret = config \ "consumerSecret" text
 
-class ScriptingBird(password: String) {
-  def getMentions: String = {
-    val client = new HttpClient()
-    val method = new GetMethod("http://twitter.com/statuses/mentions.xml")
-    val credentials = new UsernamePasswordCredentials("scriptingbird", password)
+    val interpreterSettings = new Settings()
+    interpreterSettings.usejavacp.value = true
+    val interpreter = new scala.tools.nsc.Interpreter(interpreterSettings)
+    val twitter = new TwitterFactory().getOAuthAuthorizedInstance(consumerKey, consumerSecret, new AccessToken(accessToken, accessTokenSecret))
+    val friendIDs = twitter.getFriendsIDs.getIDs
 
-    method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false))
-    client.getParams().setAuthenticationPreemptive(true)
-    client.getState().setCredentials(new AuthScope("twitter.com", 80, AuthScope.ANY_REALM), credentials)
-    client.executeMethod(method)
-    method.getResponseBodyAsString()
+    val messages = asScalaIterable(twitter.getDirectMessages())
+    for (message <- messages) {
+      val friendID = message.getSenderId;
+      if (friendIDs.contains(friendID)) {
+        val value = interpreter.evalExpr[AnyRef](message.getText.replaceFirst("#scala ", ""))
+        twitter.sendDirectMessage(friendID, value.toString)
+      }
+    }
   }
 }
