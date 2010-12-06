@@ -1,11 +1,12 @@
 import java.lang.Thread._
 
 import scala.collection.JavaConversions._
-import scala.tools.nsc._
 import scala.xml._
 
 import twitter4j._
 import twitter4j.http._
+
+import language._
 
 object ScriptingBird {
   def main(args: Array[String]): Unit = {
@@ -15,9 +16,6 @@ object ScriptingBird {
     val consumerKey = config \ "consumerKey" text
     val consumerSecret = config \ "consumerSecret" text
 
-    val interpreterSettings = new Settings()
-    interpreterSettings.usejavacp.value = true
-    val interpreter = new scala.tools.nsc.Interpreter(interpreterSettings)
     val twitter = new TwitterFactory().getOAuthAuthorizedInstance(consumerKey, consumerSecret, new AccessToken(accessToken, accessTokenSecret))
     val friendIDs = twitter.getFriendsIDs.getIDs
 
@@ -25,7 +23,14 @@ object ScriptingBird {
     for (message <- messages) {
       val friendID = message.getSenderId;
       if (friendIDs.contains(friendID)) {
-        val value = interpreter.evalExpr[AnyRef](message.getText.replaceFirst("#scala ", ""))
+        val value = message.getText match {
+          case Scala.regex(expression) => Scala.eval(expression)
+          case Groovy.regex(expression) => Groovy.eval(expression)
+          case Python.regex(expression) => Python.eval(expression)
+          case Ruby.regex(expression) => Ruby.eval(expression)
+          case _ => "Unable to evalute expression"
+        }
+
         twitter.sendDirectMessage(friendID, value.toString)
       }
     }
