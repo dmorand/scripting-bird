@@ -9,7 +9,7 @@ object Scala extends ScriptingLanguage {
   interpreterSettings.usejavacp.value = true
   private val interpreter = new Interpreter(interpreterSettings)
 
-  def eval(expression: String) = {
+  def eval(expression: String): AnyRef = {
     interpreter.evalExpr[AnyRef](expression)
   }
 }

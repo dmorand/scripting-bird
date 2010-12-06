@@ -1,9 +1,12 @@
 package language
 
+import groovy.lang._
+
 object Groovy  extends ScriptingLanguage {
     val regex = "#groovy (.*)".r
-
-    def eval(expression: String) = {
-        
+    private val shell = new GroovyShell(new Binding())
+    
+    def eval(expression: String): AnyRef = {
+        shell.evaluate(expression)
     }
 }
