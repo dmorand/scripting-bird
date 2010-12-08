@@ -1,9 +1,9 @@
-package language
+package scriptingbird.language
 
 object Ruby extends ScriptingLanguage {
   val regex = "#ruby (.*)".r
 
   def eval(expression: String): AnyRef = {
-    return null
+    return "I don't speak ruby yet"
   }
 }

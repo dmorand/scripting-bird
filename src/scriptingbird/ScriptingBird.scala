@@ -1,3 +1,5 @@
+package scriptingbird
+
 import java.lang.Thread._
 
 import scala.collection.JavaConversions._
@@ -46,6 +48,8 @@ object ScriptingBird {
       case Groovy.regex(expression) => Groovy.eval(expression)
       case Python.regex(expression) => Python.eval(expression)
       case Ruby.regex(expression) => Ruby.eval(expression)
+      case Clojure.regex(expression) => Clojure.eval(expression)
+      case Ecmascript.regex(expression) => Ecmascript.eval(expression)
       case _ => "Unable to evalute expression"
     }
   }

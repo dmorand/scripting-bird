@@ -1,4 +1,4 @@
-package language
+package scriptingbird.language
 
 import scala.util.matching._
 

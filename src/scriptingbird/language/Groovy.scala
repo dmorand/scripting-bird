@@ -1,4 +1,4 @@
-package language
+package scriptingbird.language
 
 import groovy.lang._
 
