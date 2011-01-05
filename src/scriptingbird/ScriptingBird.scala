@@ -4,14 +4,18 @@ import java.lang.Thread._
 
 import scala.collection.JavaConversions._
 import scala.xml._
+import scala.util.matching._
 
 import twitter4j._
 import twitter4j.http._
 
-import language._
+import engine._
 
-object ScriptingBird {
+object ScriptingBird {    
+  val messageRegex = "#([^ ]+) (.*)".r
+
   def main(args: Array[String]): Unit = {
+    Jsr223.printAvailableLanguages
     //twitterMain(args)
     consoleMain
   }
@@ -44,13 +48,17 @@ object ScriptingBird {
 
   def eval(message: String): AnyRef = {
     message match {
-      case Scala.regex(expression) => Scala.eval(expression)
-      case Groovy.regex(expression) => Groovy.eval(expression)
-      case Python.regex(expression) => Python.eval(expression)
-      case Ruby.regex(expression) => Ruby.eval(expression)
-      case Clojure.regex(expression) => Clojure.eval(expression)
-      case Ecmascript.regex(expression) => Ecmascript.eval(expression)
-      case _ => "Unable to evalute expression"
+      case messageRegex(language, expression) => eval(language, expression)
+      case _ => "Invalid message format"
     }
+  }
+  
+  def eval(language: String, expression: String): AnyRef = {
+    if (Jsr223.handles(language))
+      Jsr223.eval(language, expression)
+    else if (Scala.handles(language))
+      Scala.eval(expression)         
+    else 
+      "Unknown scripting language '" + language + "'"
   }
 }
