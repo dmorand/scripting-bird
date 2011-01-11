@@ -3,19 +3,17 @@ package scriptingbird
 import java.lang.Thread._
 
 import scala.collection.JavaConversions._
-import scala.xml._
 import scala.util.matching._
+import scala.xml._
 
 import twitter4j._
 import twitter4j.http._
 
-import engine._
-
-object ScriptingBird {    
-  val messageRegex = "#([^ ]+) (.*)".r
+object ScriptingBird {
+  val resetRegex = "#reset".r
+  val languageRegex = "#([^ ]+)".r
 
   def main(args: Array[String]): Unit = {
-    Jsr223.printAvailableLanguages
     //twitterMain(args)
     consoleMain
   }
@@ -34,31 +32,24 @@ object ScriptingBird {
     for (message <- messages) {
       val friendID = message.getSenderId;
       if (friendIDs.contains(friendID)) {
-        val value = eval(message.getText)
+        val value = handle(null, message.getText)
         twitter.sendDirectMessage(friendID, value.toString)
       }
     }
   }
 
   def consoleMain = {
+    val jsr223 = new Jsr223()
     while (true) {
-      println(eval(readLine).toString)
+      println(handle(jsr223, readLine).toString)
     }
   }
 
-  def eval(message: String): AnyRef = {
+  def handle(jsr223: Jsr223, message: String): AnyRef = {
     message match {
-      case messageRegex(language, expression) => eval(language, expression)
-      case _ => "Invalid message format"
+      case resetRegex() => jsr223.reset()
+      case languageRegex(language) => jsr223.language(language)
+      case _ => jsr223.eval(message)
     }
-  }
-  
-  def eval(language: String, expression: String): AnyRef = {
-    if (Jsr223.handles(language))
-      Jsr223.eval(language, expression)
-    else if (Scala.handles(language))
-      Scala.eval(expression)         
-    else 
-      "Unknown scripting language '" + language + "'"
   }
 }

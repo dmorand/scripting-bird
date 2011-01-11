@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="lib/groovy-1.7.5.jar"/>
 	<classpathentry kind="lib" path="lib/jython-2.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/clojure-1.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/clojure-jsr223.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
