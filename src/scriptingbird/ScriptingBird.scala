@@ -3,20 +3,23 @@ package scriptingbird
 import handler._
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.Map
 import scala.util.matching._
 import scala.xml._
 
-import java.lang.Thread._
+import java.lang.Thread.sleep
+import java.lang.System.currentTimeMillis
 
 import twitter4j._
+import twitter4j.conf._;
 import twitter4j.http._
 
 object ScriptingBird {
   val changeLanguageRegex = "#([^ ]+)".r
 
   def main(args: Array[String]): Unit = {
-    //twitterMain(args)
-    consoleMain
+    twitterMain(args)
+    //consoleMain
   }
 
   def twitterMain(args: Array[String]): Unit = {
@@ -28,13 +31,31 @@ object ScriptingBird {
 
     val twitter = new TwitterFactory().getOAuthAuthorizedInstance(consumerKey, consumerSecret, new AccessToken(accessToken, accessTokenSecret))
     val friendIDs = twitter.getFriendsIDs.getIDs
+    val friendActors = Map[Int, ScriptingBirdActor]()
+    var lastDirectMessageId: Long = 0
 
-    val messages = asScalaIterable(twitter.getDirectMessages())
+    var messages = asScalaIterable(twitter.getDirectMessages())
     for (message <- messages) {
-      val friendID = message.getSenderId;
-      if (friendIDs.contains(friendID)) {
-        //val value = handle(null, message.getText)
-        //twitter.sendDirectMessage(friendID, value.toString)
+        lastDirectMessageId = message.getId()
+    }
+    
+    println(lastDirectMessageId)
+    
+    while (true) {
+      sleep(20000)
+      messages = asScalaIterable(twitter.getDirectMessages(new Paging(lastDirectMessageId)))
+      for (message <- messages) {
+        val friendID = message.getSenderId;
+        if (friendIDs.contains(friendID)) {
+          if(!friendActors.contains(friendID)) {
+              friendActors += (friendID -> new ScriptingBirdActor(new TwitterHandler(twitter, friendID)))
+              friendActors(friendID).start
+          }
+          
+          friendActors(friendID) ! getMessage(message.getText) 
+          lastDirectMessageId = message.getId()
+          println(lastDirectMessageId)
+        }
       }
     }
   }
