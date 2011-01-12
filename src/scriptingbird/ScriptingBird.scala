@@ -1,17 +1,18 @@
 package scriptingbird
 
-import java.lang.Thread._
+import handler._
 
 import scala.collection.JavaConversions._
 import scala.util.matching._
 import scala.xml._
 
+import java.lang.Thread._
+
 import twitter4j._
 import twitter4j.http._
 
 object ScriptingBird {
-  val resetRegex = "#reset".r
-  val languageRegex = "#([^ ]+)".r
+  val changeLanguageRegex = "#([^ ]+)".r
 
   def main(args: Array[String]): Unit = {
     //twitterMain(args)
@@ -32,24 +33,27 @@ object ScriptingBird {
     for (message <- messages) {
       val friendID = message.getSenderId;
       if (friendIDs.contains(friendID)) {
-        val value = handle(null, message.getText)
-        twitter.sendDirectMessage(friendID, value.toString)
+        //val value = handle(null, message.getText)
+        //twitter.sendDirectMessage(friendID, value.toString)
       }
     }
   }
 
   def consoleMain = {
-    val jsr223 = new Jsr223()
+    val actor = new ScriptingBirdActor(ConsoleHandler)
+    actor.start
+
     while (true) {
-      println(handle(jsr223, readLine).toString)
+      actor ! getMessage(readLine)
     }
   }
 
-  def handle(jsr223: Jsr223, message: String): AnyRef = {
-    message match {
-      case resetRegex() => jsr223.reset()
-      case languageRegex(language) => jsr223.language(language)
-      case _ => jsr223.eval(message)
+  def getMessage(text: String): Message = {
+    text match {
+      case "#reset" => Reset()
+      case "#languages" => AvailableLanguages()
+      case changeLanguageRegex(language) => ChangeLanguage(language)
+      case _ => EvaluateExpression(text)
     }
   }
 }
