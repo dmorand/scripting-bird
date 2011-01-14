@@ -43,7 +43,9 @@ object ScriptingBird {
     
     while (true) {
       sleep(20000)
-      messages = asScalaIterable(twitter.getDirectMessages(new Paging(lastDirectMessageId)))
+      println("Fetching direct messages...")
+      messages = twitter.getDirectMessages(new Paging(lastDirectMessageId))
+      println("Got "+ messages.size() + " messages...")
       for (message <- messages) {
         val friendID = message.getSenderId;
         if (friendIDs.contains(friendID)) {
