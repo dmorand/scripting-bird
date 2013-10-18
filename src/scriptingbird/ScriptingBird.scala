@@ -4,6 +4,7 @@ import handler._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.Map
+import scala.language.postfixOps
 import scala.util.matching._
 import scala.xml._
 
@@ -18,8 +19,8 @@ object ScriptingBird {
   val changeLanguageRegex = "#([^ ]+)".r
 
   def main(args: Array[String]): Unit = {
-    twitterMain(args)
-    //consoleMain
+    //twitterMain(args)
+    consoleMain
   }
 
   def twitterMain(args: Array[String]): Unit = {
@@ -29,12 +30,12 @@ object ScriptingBird {
     val consumerKey = config \ "consumerKey" text
     val consumerSecret = config \ "consumerSecret" text
 
-    val twitter = new TwitterFactory().getOAuthAuthorizedInstance(consumerKey, consumerSecret, new AccessToken(accessToken, accessTokenSecret))
+    val twitter = new TwitterFactory().getInstance(new AccessToken(accessToken, accessTokenSecret))
     val friendIDs = twitter.getFriendsIDs.getIDs
     val friendActors = Map[Int, ScriptingBirdActor]()
     var lastDirectMessageId: Long = 0
 
-    var messages = asScalaIterable(twitter.getDirectMessages())
+    var messages = collectionAsScalaIterable(twitter.getDirectMessages())
     for (message <- messages) {
         lastDirectMessageId = message.getId()
     }
